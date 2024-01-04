@@ -1,17 +1,18 @@
 import { InMemoryQuestionCommentsRepository } from 'test/repositories/in-memory-question-comments-repository'
-import { DeleteQuestionCommentUseCase } from '@/domain/forum/application/use-cases/delete-question-comment'
+import { DeleteQuestionOnCommentUseCase } from '@/domain/forum/application/use-cases/delete-question-on-comment'
 import { MakeQuestionComment } from 'test/factories/make-question-comment'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
+import { NotAllowedError } from './errors/not-allowed-error'
 
 let inMemoryQuestionCommentsRepository: InMemoryQuestionCommentsRepository
-let sut: DeleteQuestionCommentUseCase
+let sut: DeleteQuestionOnCommentUseCase
 
 describe('Delete Question Comment', () => {
   beforeEach(() => {
     inMemoryQuestionCommentsRepository =
       new InMemoryQuestionCommentsRepository()
 
-    sut = new DeleteQuestionCommentUseCase(inMemoryQuestionCommentsRepository)
+    sut = new DeleteQuestionOnCommentUseCase(inMemoryQuestionCommentsRepository)
   })
 
   it('should be able to delete a question comment', async () => {
@@ -34,11 +35,12 @@ describe('Delete Question Comment', () => {
 
     await inMemoryQuestionCommentsRepository.create(questionComment)
 
-    expect(() => {
-      return sut.execute({
-        questionCommentId: questionComment.id.toString(),
-        authorId: 'author-2',
-      })
-    }).rejects.toBeInstanceOf(Error)
+    const result = await sut.execute({
+      questionCommentId: questionComment.id.toString(),
+      authorId: 'author-2',
+    })
+
+    expect(result.isLeft()).toBe(true)
+    expect(result.value).toBeInstanceOf(NotAllowedError)
   })
 })
